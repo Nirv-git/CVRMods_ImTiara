@@ -1,4 +1,6 @@
-﻿using ABI_RC.Core.Savior;
+﻿using ABI_RC.Core.Player;
+using ABI_RC.Core.Savior;
+using ABI_RC.Systems.GameEventSystem;
 using ABI_RC.Systems.InputManagement;
 using MelonLoader;
 using System;
@@ -7,7 +9,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-[assembly: MelonInfo(typeof(GestureIndicator.GestureIndicator), "GestureIndicator", "1.0.5", "ImTiara", "https://github.com/ImTiara/CVRMods")]
+[assembly: MelonInfo(typeof(GestureIndicator.GestureIndicator), "GestureIndicator", "1.0.67", "Nirvash,ImTiara", "https://github.com/ImTiara/CVRMods")]
 [assembly: MelonGame(null, "ChilloutVR")]
 
 namespace GestureIndicator
@@ -97,6 +99,13 @@ namespace GestureIndicator
             OPACITY.OnEntryValueChangedUntyped.Subscribe((editedValue, defaultValue) => { RefreshColors(); });
             LEFT_COLOR.OnEntryValueChangedUntyped.Subscribe((editedValue, defaultValue) => { RefreshColors(); });
             RIGHT_COLOR.OnEntryValueChangedUntyped.Subscribe((editedValue, defaultValue) => { RefreshColors(); });
+
+            CVRGameEventSystem.VRModeSwitch.OnPostSwitch.AddListener((value) => {
+                m_Root.transform.parent = PlayerSetup.Instance.activeCam.transform;
+                m_Root.transform.localPosition = Vector3.zero;
+                m_Root.transform.localRotation = Quaternion.identity;
+                m_Root.layer = 15;
+            });
         }
 
         public static IEnumerator CheckGesture()
@@ -175,18 +184,23 @@ namespace GestureIndicator
 
         public override void OnSceneWasLoaded(int buildIndex, string sceneName)
         {
+            //MelonLogger.Warning($"BuildIndex:{buildIndex}");
+            //MelonLogger.Warning($"SceneName:{sceneName}");
             switch (buildIndex)
             {
-                case 0: break;
-                case 1: break;
-                case 2: break;
-                default:
+                case 0: break; //Preparation
+                case 1: break; //Init
+                case 2: break; //LoginRoomNew
+                case 4: break; //AdditiveContentScene
+                case -1: 
                     if (!init)
                     {
                         init = true;
                         ToggleIndicators(ENABLE.Value);
                     }
                     break;
+                default: break;
+                    
             }
         }
 
@@ -194,7 +208,7 @@ namespace GestureIndicator
         {
             if (m_Root == null)
             {
-                m_Root = GameObject.Instantiate(AssetLoader.template, Camera.main.transform);
+                m_Root = GameObject.Instantiate(AssetLoader.template, PlayerSetup.Instance.activeCam.transform);
                 m_Root.transform.localPosition = Vector3.zero;
                 m_Root.transform.localRotation = Quaternion.identity;
                 m_Root.layer = 15;
